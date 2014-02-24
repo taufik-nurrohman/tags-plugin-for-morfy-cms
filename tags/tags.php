@@ -29,6 +29,8 @@ Morfy::factory()->addAction('tags_links', function() {
         }
     }
 
+    sort($tags);
+
     echo implode($config['separator'], $tags);
 
 });

@@ -45,10 +45,10 @@ Add this snippet to your `blog_post.html` that is placed in the `themes` folder 
 Edit your `blog.html` file. You have to replace the posts loop with this:
 
     <?php
-    
+
     $posts = Morfy::factory()->getPages(CONTENT_PATH . '/blog/', 'date', 'DESC', array('404','index'));
     $tag_filter = Morfy::$config['tags_config']['param'];
-    
+
     if(isset($tag_filter) && isset($_GET[$tag_filter])) { // Tags page
     	Morfy::factory()->runAction('tags');
     } else { // Normal posts loop
@@ -58,22 +58,21 @@ Edit your `blog.html` file. You have to replace the posts loop with this:
                 <div>'.$post['content_short'].'</div>';
         }
     }
-    
+
     ?>
 
 If you already installed my [nextprev](https://github.com/tovic/nextprev-plugin-for-morfy-cms "Next/Previous Navigation (Pagination) Plugin for Morfy CMS") plugin, use this code instead:
 
     <?php
-    
-    $posts = Morfy::factory()->getPages(CONTENT_PATH . '/blog/', 'date', 'DESC', array('404','index'));
+
     $tag_filter = Morfy::$config['tags_config']['param'];
-    
+
     if(isset($tag_filter) && isset($_GET[$tag_filter])) { // Tags page
     	Morfy::factory()->runAction('tags');
     } else { // Normal posts loop
         Morfy::factory()->runAction('index_nextprev');
     }
-    
+
     ?>
 
 Done.

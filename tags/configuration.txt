@@ -1,0 +1,29 @@
+Update your `config.php` file!
+------------------------------
+
+<?php
+    return array(
+
+        ...
+        ...
+        ...
+
+        'plugins' => array(
+            'markdown',
+            'sitemap',
+            'tags' // <= Activation
+        ),
+        'tags_config' => array( // <= Configuration
+            'param' => 'tagged', // <= Page parameter name in URL for tag filtering
+            'separator' => ', ', // <= Separator for each generated tag link
+            'classes' => array( // <= List of item's HTML classes
+                'page_item' => 'page-post',
+                'tag' => 'tag',
+                'current' => 'current'
+            ),
+            'labels' => array( // <= List of item's readable text or labels
+                'page_header' => '<p>Showing posts tagged in &ldquo;{tag}&rdquo;</p>',
+                'not_found' => '<p>Not found.</p>'
+            )
+        )
+    );

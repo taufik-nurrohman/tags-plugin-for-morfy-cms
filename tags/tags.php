@@ -79,24 +79,24 @@ Morfy::factory()->addAction('tags', function() {
         if(isset($posts[$current_page - 1]) && ! empty($posts[$current_page - 1])) {
             // Build the posts list
             foreach($posts[$current_page - 1] as $post) {
-                $results .= '<article class="' . $config['classes']['page_item'] . '">';
+                $results .= '<div class="' . $config['classes']['page_item'] . '">';
                 $results .= $post['title'] ? '<h3><a href="' . $post['url'] . '">' . $post['title'] . '</a></h3>' : "";
-                $results .= $post['date'] ? '<p class="page-date"><strong>Published on:</strong> <time datetime="' . date('c', strtotime($post['date'])) . '">' . date('F d, Y', strtotime($post['date'])) . '</time></p>' : "";
+                $results .= $post['date'] ? '<p><em><strong>Published on:</strong> ' . $post['date'] . '</em></p>' : "";
                 if(strlen($post['description']) > 0) {
                     $results .= '<p>' . $post['description'] . '</p>';
                 } elseif(strlen($post['content_short']) > 0) {
                     $results .= '<p>' . $post['content_short'] . '</p>';
                 }
-                $results .= '</article>';
+                $results .= '</div>';
             }
             // Build the pagination
-            $results .= '<nav class="' . $config['classes']['nav'] . '">';
-            $results .= $current_page > 1 ? '<a class="' . $config['classes']['nav_prev'] . '" href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page - 1) . '">' . $config['labels']['nav_prev'] . '</a>' : '<span class="' . $config['classes']['nav_prev'] . ' ' . $config['classes']['nav_disabled'] . '">' . $config['labels']['nav_prev'] . '</span>';
-            $results .= $current_page < $total_pages ? ' <a class="' . $config['classes']['nav_next'] . '" href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page + 1) . '">' . $config['labels']['nav_next'] . '</a>' : ' <span class="' . $config['classes']['nav_next'] . ' ' . $config['classes']['nav_disabled'] . '">' . $config['labels']['nav_next'] . '</span>';
-            $results .= '</nav>';
+            $results .= '<ul class="' . $config['classes']['nav'] . '">';
+            $results .= $current_page > 1 ? '<li class="' . $config['classes']['nav_prev'] . '"><a href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page - 1) . '">' . $config['labels']['nav_prev'] . '</a></li>' : '<li class="' . $config['classes']['nav_prev'] . ' ' . $config['classes']['nav_disabled'] . '"><span>' . $config['labels']['nav_prev'] . '</span></li>';
+            $results .= $current_page < $total_pages ? ' <li class="' . $config['classes']['nav_next'] . '"><a href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page + 1) . '">' . $config['labels']['nav_next'] . '</a></li>' : ' <li class="' . $config['classes']['nav_next'] . ' ' . $config['classes']['nav_disabled'] . '"><span>' . $config['labels']['nav_next'] . '</span></li>';
+            $results .= '</ul>';
         }
     }
 
-    echo $results === "" ? '<article class="' . $config['classes']['page_item'] . '">' . str_replace('{tag}', $filter, $config['labels']['not_found']) . '</article>' : str_replace('{tag}', $filter, $config['labels']['page_header']) . $results;
+    echo $results === "" ? '<div class="' . $config['classes']['page_item'] . '">' . str_replace('{tag}', $filter, $config['labels']['not_found']) . '</div>' : str_replace('{tag}', $filter, $config['labels']['page_header']) . $results;
 
 });

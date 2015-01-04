@@ -2,6 +2,7 @@ Update your `config.php` file!
 ------------------------------
 
 <?php
+
     return array(
 
         ...
@@ -14,16 +15,25 @@ Update your `config.php` file!
             'tags' // <= Activation
         ),
         'tags_config' => array( // <= Configuration
-            'param' => 'tagged', // <= Page parameter name in URL for tag filtering
-            'separator' => ', ', // <= Separator for each generated tag link
+            'param' => 'tagged', // <= Page parameter name in URL for the tags filter
+            'param_page' => 'page', // <= Page parameter name in URL for the page filter
+            'limit' => 5, // <= Number of posts to display per page request
+            'separator' => ', ', // <= Separator for each tag link
             'classes' => array( // <= List of item's HTML classes
-                'page_item' => 'page-post',
+                'page_item' => 'page',
+                'nav' => 'pager',
+                'nav_prev' => 'previous',
+                'nav_next' => 'next',
+                'nav_disabled' => 'disabled',
                 'tag' => 'tag',
                 'current' => 'current'
             ),
             'labels' => array( // <= List of item's readable text or labels
-                'page_header' => '<p>Showing posts tagged in &ldquo;{tag}&rdquo;</p>',
-                'not_found' => '<p>Not found.</p>'
+                'page_header' => '<div class="alert alert-info"><p>Showing posts tagged in <strong>{tag}</strong>.</p></div>',
+                'nav_prev' => '&larr; Previous',
+                'nav_next' => 'Next &rarr;',
+                'not_found' => '<div class="alert alert-danger"><p>No more posts found tagged in <strong>{tag}</strong>.</p></div>'
             )
         )
+
     );

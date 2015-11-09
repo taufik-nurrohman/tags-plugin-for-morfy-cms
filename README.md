@@ -48,7 +48,8 @@ Add a tag widget in `blog_post.tpl` like this:
 
 Done.
 
-### Added New Global Variable
+New Global Variable
+-------------------
 
 `$.site.tag` will return the current page tag.
 

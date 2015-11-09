@@ -4,89 +4,52 @@ Tags Plugin for Morfy CMS
 Configuration
 -------------
 
-Place the `tags` folder with its contents in `plugins` folder. Then update your `config.php` file:
+1. Put the `tags` folder to the `plugins` folder
+2. Go to `config\site.yml` and add `tags` to the plugins section:
+3. Save your changes.
 
-~~~ .php
-<?php
-
-    return array(
-
-        ...
-        ...
-        ...
-
-        'plugins' => array(
-            'markdown',
-            'sitemap',
-            'tags' // <= Activation
-        ),
-        'tags_config' => array( // <= Configuration
-            'param' => 'tagged', // <= Page parameter name in URL for the tags filter
-            'param_page' => 'page', // <= Page parameter name in URL for the page filter
-            'limit' => 5, // <= Number of posts to display per page request
-            'separator' => ', ', // <= Separator for each tag link
-            'classes' => array( // <= List of item's HTML classes
-                'page_item' => 'page',
-                'nav' => 'pager',
-                'nav_prev' => 'previous',
-                'nav_next' => 'next',
-                'nav_disabled' => 'disabled',
-                'tag' => 'tag',
-                'current' => 'current'
-            ),
-            'labels' => array( // <= List of item's readable text or labels
-                'page_header' => '<div class="alert alert-info"><p>Showing posts tagged in <strong>{tag}</strong>.</p></div>',
-                'nav_prev' => '&larr; Previous',
-                'nav_next' => 'Next &rarr;',
-                'not_found' => '<div class="alert alert-danger"><p>No more posts found tagged in <strong>{tag}</strong>.</p></div>'
-            )
-        )
-
-    );
+~~~ .yml
+# Site Plugins
+plugins:
+  tags
 ~~~
 
 Usage
 -----
 
-Add this snippet to your `blog_post.html` that is placed in the `themes` folder to show the tag links:
+Replace your posts loop in `blog.tpl` and/or `index.tpl` with this:
 
-~~~ .html
-<div class="post-tags">
-    <?php Morfy::factory()->runAction('tags_links'); ?>
+~~~ .no-highlight
+{if $.site.tag}
+  {Morfy::runAction('tags')}
+{else}
+  {* normal posts loop goes here... *}
+{/if}
+~~~
+
+If you have installed the [`nextprev`](https://github.com/tovic/nextprev-plugin-for-morfy-cms "Next/Previous Navigation (Pagination) Plugin for Morfy CMS") plugin, you can use this snippet:
+
+~~~ .no-highlight
+{if $.site.tag}
+  {Morfy::runAction('tags')}
+{else}
+  {Morfy::runAction('nextprev')}
+{/if}
+~~~
+
+Add a tag widget in `blog_post.tpl` like this:
+
+~~~ .no-highlight
+<div class="widget">
+  <h4>Tags</h4>
+  <p>{Morfy::runAction('tags.widget')}</p>
 </div>
 ~~~
 
-Edit your `blog.html` file. You have to replace the posts loop with this:
-
-~~~ .php
-<?php
-
-$posts = Morfy::factory()->getPages(CONTENT_PATH . '/blog/', 'date', 'DESC', array('404','index'));
-$tag_filter = Morfy::$config['tags_config']['param'];
-
-if(isset($tag_filter) && isset($_GET[$tag_filter])) { // Tags page
-    Morfy::factory()->runAction('tags');
-} else { // Normal posts loop
-    foreach($posts as $post) {
-        echo '<h3><a href="'.$config['site_url'].'/blog/'.$post['slug'].'">'.$post['title'].'</a></h3>                
-            <p>Posted on '.$post['date'].'</p>    
-            <div>'.$post['content_short'].'</div>';
-    }
-}
-~~~
-
-If you already installed my [nextprev](https://github.com/tovic/nextprev-plugin-for-morfy-cms "Next/Previous Navigation (Pagination) Plugin for Morfy CMS") plugin, use this code instead:
-
-~~~ .php
-<?php
-
-$tag_filter = Morfy::$config['tags_config']['param'];
-
-if(isset($tag_filter) && isset($_GET[$tag_filter])) { // Tags page
-    Morfy::factory()->runAction('tags');
-} else { // Normal posts loop
-    Morfy::factory()->runAction('index_nextprev');
-}
-~~~
-
 Done.
+
+### Added New Global Variable
+
+`$.site.tag` will return the current page tag.
+
+This is basically equal to `$.get.tag`. But since the `tag` parameter URL is dynamic, you cannot use the `$.get.tag` variable safely. Because if you change the `param.tag` configuration value to `foo` for example, then you have to replace `$.get.tag` with `$.get.foo`.

@@ -6,97 +6,116 @@
  * @package Morfy
  * @subpackage Plugins
  * @author Taufik Nurrohman <http://latitudu.com>
- * @copyright 2014 Romanenko Sergey / Awilum
- * @version 1.0.1
+ * @copyright 2015 Romanenko Sergey / Awilum
+ * @version 2.0.0
  *
  */
 
-Morfy::factory()->addAction('tags_links', function() {
+// Configuration data
+$tags_config = Morfy::$plugins['tags'];
 
-    // Configuration data
-    $config = Morfy::$config['tags_config'];
+// Initialize Fenom
+$tags_template = Fenom::factory(
+    PLUGINS_PATH . '/' . basename(__DIR__) . '/templates',
+    CACHE_PATH . '/fenom',
+    Morfy::$fenom
+);
+
+// Add global `$.site.offset` variable
+Morfy::$site['offset'] = isset($_GET[$tags_config['param']['page']]) ? (int) $_GET[$tags_config['param']['page']] : 1;
+
+// Add global `$.site.tag` variable
+Morfy::$site['tag'] = isset($_GET[$tags_config['param']['tag']]) ? $_GET[$tags_config['param']['tag']] : false;
+
+// Morfy::runAction('tags');
+Morfy::addAction('tags', function() use($tags_config, $tags_template) {
+
     // Get current URI segments
-    $path = Morfy::factory()->getUriSegments();
-    array_pop($path);
-    // Get post data
-    $post = Morfy::factory()->getPage(Morfy::factory()->getUrl());
+    $path = trim(Url::getUriString(), '/');
+    // Number of posts to display per page request
+    $per_page = isset($tags_config['limit']) ? $tags_config['limit'] : 5;
+    // Get all posts
+    $all_pages = Morfy::getPages($path, 'date', 'DESC', array('404', 'index'));
+    // Get current page offset
+    $current_page = Morfy::$site['offset'];
+    // Get tag name from URL
+    $filter = Morfy::$site['tag'];
 
-    $tags = array();
-    if( ! empty($post['tags'])) {
-        foreach(explode(',', $post['tags']) as $tag) {
-            $tags[] = '<a class="' . $config['classes']['tag'] . '" href="' . rtrim(Morfy::$config['site_url'], '/') . '/' . implode('/', $path) . '?' . $config['param'] . '=' . preg_replace('/\s+/', '+', trim($tag)) . '">' . trim($tag) . '</a>';
+    // Filtering ...
+    if($filter !== false) {
+        $filter = urldecode($filter);
+        $tags_config['labels']['found'] = str_replace('{tag}', $filter, $tags_config['labels']['found']);
+        $tags_config['labels']['not_found'] = str_replace('{tag}', $filter, $tags_config['labels']['not_found']);
+        // Collect all of the filtered posts here
+        $filtered_pages = array();
+        if(is_array($all_pages)) {
+            foreach($all_pages as $page) {
+                if( ! isset($page['tags'])) continue;
+                // Remove all spaces between commas, then wrap them with `<` and `>`
+                $tags = ',' . preg_replace('/\s*,\s*/', ',', $page['tags']) . ',';
+                if(strpos($tags, ',' . $filter . ',') !== false) {
+                    $filtered_pages[] = $page;
+                }
+            }
+            unset($all_pages);
+        }
+        if( ! empty($filtered_pages)) {
+            // Split all of the filtered posts into chunks
+            $pages = array_chunk($filtered_pages, $per_page);
+            // Calculate total pages
+            $total_pages = ceil(count($filtered_pages) / $per_page);
+            // Posts loop
+            if(isset($pages[$current_page - 1]) && ! empty($pages[$current_page - 1])) {
+                $tags_template->display('success.tpl', array(
+                    'config' => $tags_config
+                ));
+                foreach($pages[$current_page - 1] as $page) {
+                    $tags_template->display('post.tpl', array(
+                        'config' => $tags_config,
+                        'page' => $page
+                    ));
+                }
+                // Pagination
+                $tags_template->display('nav.tpl', array(
+                    'config' => $tags_config,
+                    'current' => $current_page,
+                    'total' => $total_pages,
+                    'prev' => $current_page > 1 ? '?' . $tags_config['param']['page'] . '=' . ($current_page - 1) . '&amp;' . $tags_config['param']['tag'] . '=' . urlencode($filter) : false,
+                    'next' => $current_page < $total_pages ? '?' . $tags_config['param']['page'] . '=' . ($current_page + 1) . '&amp;' . $tags_config['param']['tag'] . '=' . urlencode($filter) : false
+                ));
+            } else {
+                $tags_template->display('error.tpl', array(
+                    'config' => $tags_config
+                ));
+            }
+        } else {
+            $tags_template->display('error.tpl', array(
+                'config' => $tags_config
+            ));
         }
     }
-
-    sort($tags);
-
-    echo implode($config['separator'], $tags);
 
 });
 
-Morfy::factory()->addAction('tags', function() {
+// Morfy::runAction('tags.widget');
+Morfy::addAction('tags.widget', function() use($tags_config, $tags_template) {
 
-    // Configuration data
-    $config = Morfy::$config['tags_config'];
     // Get current URI segments
-    $path = Morfy::factory()->getUrl();
-    // Number of posts to display per page request
-    $per_page = isset($config['limit']) ? $config['limit'] : 5;
-    // Get all posts
-    $all_posts = Morfy::factory()->getPages(CONTENT_PATH . '/' . $path, 'date', 'DESC', array('404', 'index'));
-    // Get current page offset
-    $current_page = isset($_GET[$config['param_page']]) ? (int) $_GET[$config['param_page']] : 1;
-    // Get tag name from URL
-    $filter = $_GET[$config['param']];
-
-    // Collect all of the filtered posts here
-    $filtered_posts = array();
-    $results = "";
-
-    // Filtering ...
-    if(isset($filter)) {
-        $filter = Morfy::factory()->cleanString(urldecode($filter));
-        if(is_array($all_posts)) {
-            foreach($all_posts as $post) {
-                // Remove all spaces between commas, then wrap them with `<` and `>`
-                $tags = '<' . preg_replace('/\s*,\s*/', ',', $post['tags']) . '>';
-                if(
-                    strpos($tags, '<' . $filter . ',') !== false ||
-                    strpos($tags, ',' . $filter . ',') !== false ||
-                    strpos($tags, ',' . $filter . '>') !== false ||
-                    '<' . $filter . '>' === $tags
-                ) {
-                    $filtered_posts[] = $post;
-                }
-            }
-        }
-
-        // Split all of the filtered posts into chunks
-        $posts = array_chunk($filtered_posts, $per_page);
-        // Calculate total pages
-        $total_pages = ceil(count($filtered_posts) / $per_page);
-
-        if(isset($posts[$current_page - 1]) && ! empty($posts[$current_page - 1])) {
-            // Build the posts list
-            foreach($posts[$current_page - 1] as $post) {
-                $results .= '<div class="' . $config['classes']['page_item'] . '">';
-                $results .= $post['title'] ? '<h3><a href="' . $post['url'] . '">' . $post['title'] . '</a></h3>' : "";
-                $results .= $post['date'] ? '<p><em><strong>Published on:</strong> ' . $post['date'] . '</em></p>' : "";
-                if(strlen($post['description']) > 0) {
-                    $results .= '<p>' . $post['description'] . '</p>';
-                } elseif(strlen($post['content_short']) > 0) {
-                    $results .= '<p>' . $post['content_short'] . '</p>';
-                }
-                $results .= '</div>';
-            }
-            // Build the pagination
-            $results .= '<ul class="' . $config['classes']['nav'] . '">';
-            $results .= $current_page > 1 ? '<li class="' . $config['classes']['nav_prev'] . '"><a href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page - 1) . '">' . $config['labels']['nav_prev'] . '</a></li>' : '<li class="' . $config['classes']['nav_prev'] . ' ' . $config['classes']['nav_disabled'] . '"><span>' . $config['labels']['nav_prev'] . '</span></li>';
-            $results .= $current_page < $total_pages ? ' <li class="' . $config['classes']['nav_next'] . '"><a href="?' . $config['param'] . '=' . $filter . '&amp;' . $config['param_page'] . '=' . ($current_page + 1) . '">' . $config['labels']['nav_next'] . '</a></li>' : ' <li class="' . $config['classes']['nav_next'] . ' ' . $config['classes']['nav_disabled'] . '"><span>' . $config['labels']['nav_next'] . '</span></li>';
-            $results .= '</ul>';
+    $path = Url::getUriSegments();
+    $path_x = array_pop($path);
+    $path = implode('/', $path);
+    // Get post data
+    $page = Morfy::getPage($path . '/' . $path_x);
+    $tags = array();
+    if(isset($page['tags']) && ! empty($page['tags'])) {
+        foreach(explode(',', $page['tags']) as $tag) {
+            $tag = trim($tag);
+            $tags[$tag] = rtrim(Morfy::$site['url'], '/') . '/' . $path . '?' . $tags_config['param']['tag'] . '=' . urlencode($tag);
         }
     }
-
-    echo $results === "" ? '<div class="' . $config['classes']['page_item'] . '">' . str_replace('{tag}', $filter, $config['labels']['not_found']) . '</div>' : str_replace('{tag}', $filter, $config['labels']['page_header']) . $results;
+    ksort($tags);
+    $tags_template->display('link.tpl', array(
+        'tags' => $tags
+    ));
 
 });

@@ -1,0 +1,30 @@
+# Page parameter name in URL
+param:
+  # Page parameter name in URL for the tags filter
+  tag: tag
+  # Page parameter name in URL for the page filter
+  page: page
+
+# Number of posts to display per page request
+limit: 5
+
+# List of item's readable text or labels
+labels:
+  nav_prev: '&larr; Previous'
+  nav_next: 'Next &rarr;'
+  found: 'Showing posts tagged in <strong>{tag}</strong>.'
+  not_found: 'No more posts found tagged in <strong>{tag}</strong>.'
+
+# Plugin meta
+name: 'Tags Plugin'
+version: 2.0.0
+description: "Provides ability to show list of posts filtered by a tag."
+author:
+  name: Taufik Nurrohman
+  url: http://latitudu.com
+homepage: https://github.com/tovic/tags-plugin-for-morfy-cms
+bugs: https://github.com/tovic/tags-plugin-for-morfy-cms/issues
+license: GPL v3
+
+# Plugin settings
+enabled: true

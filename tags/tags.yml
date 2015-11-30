@@ -10,14 +10,18 @@ limit: 5
 
 # List of item's readable text or labels
 labels:
-  nav_prev: '&larr; Previous'
-  nav_next: 'Next &rarr;'
-  found: 'Showing posts tagged in <strong>{tag}</strong>.'
-  not_found: 'No more posts found tagged in <strong>{tag}</strong>.'
+  nav:
+    prev: '&larr; Previous'
+    next: 'Next &rarr;'
+  found:
+    page: 'Showing posts tagged in <strong>{tag}</strong>.'
+  not_found:
+    page: 'No more posts found tagged in <strong>{tag}</strong>.'
+    tag: 'No tags yet.'
 
-# Plugin meta
+# Plugin metadata
 name: 'Tags Plugin'
-version: 2.0.0
+version: 2.1.0
 description: "Provides ability to show list of posts filtered by a tag."
 author:
   name: Taufik Nurrohman

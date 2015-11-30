@@ -5,11 +5,10 @@ Configuration
 -------------
 
 1. Put the `tags` folder to the `plugins` folder
-2. Go to `config\site.yml` and add `tags` to the plugins section:
+2. Go to `config\system.yml` and add `tags` to the plugins section:
 3. Save your changes.
 
 ~~~ .yml
-# Site Plugins
 plugins:
   tags
 ~~~
@@ -20,8 +19,8 @@ Usage
 Replace your posts loop in `blog.tpl` and/or `index.tpl` with this:
 
 ~~~ .no-highlight
-{if $.site.tag}
-  {Morfy::runAction('tags')}
+{if $config.site.tag}
+  {Action::run('tags')}
 {else}
   {* normal posts loop goes here... *}
 {/if}
@@ -30,10 +29,10 @@ Replace your posts loop in `blog.tpl` and/or `index.tpl` with this:
 If you have installed the [`nextprev`](https://github.com/tovic/nextprev-plugin-for-morfy-cms "Next/Previous Navigation (Pagination) Plugin for Morfy CMS") plugin, you can use this snippet:
 
 ~~~ .no-highlight
-{if $.site.tag}
-  {Morfy::runAction('tags')}
+{if $config.site.tag}
+  {Action::run('tags')}
 {else}
-  {Morfy::runAction('nextprev')}
+  {Action::run('nextprev')}
 {/if}
 ~~~
 
@@ -42,7 +41,7 @@ Add a tag widget in `blog_post.tpl` like this:
 ~~~ .no-highlight
 <div class="widget">
   <h4>Tags</h4>
-  <p>{Morfy::runAction('tags.widget')}</p>
+  <p>{Action::run('tags.widget')}</p>
 </div>
 ~~~
 
@@ -51,6 +50,6 @@ Done.
 New Global Variable
 -------------------
 
-`$.site.tag` will return the current page tag.
+`$config.site.tag` will return the current page tag.
 
-This is basically equal to `$.get.tag`. But since the `tag` parameter URL is dynamic, you cannot use the `$.get.tag` variable safely. Because if you change the `param.tag` configuration value to `foo` for example, then you have to replace `$.get.tag` with `$.get.foo`.
+This is basically equal to `$.get.tag` and `$_GET['tag']`. But since the `tag` parameter URL is dynamic, you cannot use the `$.get.tag` and `$_GET['tag']` variable safely. Because if you replace the `param.tag` configuration value with `foo` for example, then you have to replace `$.get.tag` with `$.get.foo` and `$_GET['tag']` with `$_GET['foo']`.

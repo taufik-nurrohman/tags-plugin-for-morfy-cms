@@ -7,55 +7,58 @@
  * @subpackage Plugins
  * @author Taufik Nurrohman <http://latitudu.com>
  * @copyright 2015 Romanenko Sergey / Awilum
- * @version 2.0.0
+ * @version 2.1.0
  *
  */
 
 // Configuration data
-$tags_config = Morfy::$plugins['tags'];
+$tags_c = Config::get('plugins.tags');
 
-// Initialize Fenom
-$tags_template = Fenom::factory(
-    PLUGINS_PATH . '/' . basename(__DIR__) . '/templates',
-    CACHE_PATH . '/fenom',
-    Morfy::$fenom
-);
+// Add global `$config.site.offset` variable
+Config::set('site.offset', (int) Arr::get($_GET, $tags_c['param']['page'], 1));
 
-// Add global `$.site.offset` variable
-Morfy::$site['offset'] = isset($_GET[$tags_config['param']['page']]) ? (int) $_GET[$tags_config['param']['page']] : 1;
+// Add global `$config.site.tag` variable
+Config::set('site.tag', Arr::get($_GET, $tags_c['param']['tag'], false));
 
-// Add global `$.site.tag` variable
-Morfy::$site['tag'] = isset($_GET[$tags_config['param']['tag']]) ? $_GET[$tags_config['param']['tag']] : false;
+// Translate variable
+$c = 'plugins.tags.labels';
+Config::set($c . '.found.page', str_replace('{tag}', Config::get('site.tag'), $tags_c['labels']['found']['page']));
+Config::set($c . '.not_found.page', str_replace('{tag}', Config::get('site.tag'), $tags_c['labels']['not_found']['page']));
 
-// Morfy::runAction('tags');
-Morfy::addAction('tags', function() use($tags_config, $tags_template) {
+// Initialize template
+$tags_t = Template::factory(__DIR__ . '/templates');
+
+// Action::run('tags');
+Action::add('tags', function() use($tags_c, $tags_t) {
 
     // Get current URI segments
-    $path = trim(Url::getUriString(), '/');
+    $path = Url::getUriString();
     // Number of posts to display per page request
-    $per_page = isset($tags_config['limit']) ? $tags_config['limit'] : 5;
+    $per_page = Arr::get($tags_c, 'limit', 5);
     // Get all posts
-    $all_pages = Morfy::getPages($path, 'date', 'DESC', array('404', 'index'));
+    $all_pages = Pages::getPages($path, 'date', 'DESC', array('404', 'index'));
+    // Collect all tags
+    $all_tags = array();
     // Get current page offset
-    $current_page = Morfy::$site['offset'];
+    $current_page = Config::get('site.offset');
     // Get tag name from URL
-    $filter = Morfy::$site['tag'];
+    $filter = Config::get('site.tag');
 
     // Filtering ...
     if($filter !== false) {
         $filter = urldecode($filter);
-        $tags_config['labels']['found'] = str_replace('{tag}', $filter, $tags_config['labels']['found']);
-        $tags_config['labels']['not_found'] = str_replace('{tag}', $filter, $tags_config['labels']['not_found']);
         // Collect all of the filtered posts here
         $filtered_pages = array();
         if(is_array($all_pages)) {
             foreach($all_pages as $page) {
                 if( ! isset($page['tags'])) continue;
-                // Remove all spaces between commas, then wrap them with `<` and `>`
-                $tags = ',' . preg_replace('/\s*,\s*/', ',', $page['tags']) . ',';
-                if(strpos($tags, ',' . $filter . ',') !== false) {
+                // Remove all spaces between commas
+                $tags = preg_replace('#\s*,\s*#', ',', $page['tags']);
+                if(strpos(',' . $tags . ',', ',' . $filter . ',') !== false) { // much faster than `in_array()` ;)
                     $filtered_pages[] = $page;
                 }
+                $all_tags = array_merge($all_tags, explode(',', $tags));
+                File::setContent(__DIR__ . '/cache/tags.json', json_encode(array_unique($all_tags)));
             }
             unset($all_pages);
         }
@@ -66,56 +69,55 @@ Morfy::addAction('tags', function() use($tags_config, $tags_template) {
             $total_pages = ceil(count($filtered_pages) / $per_page);
             // Posts loop
             if(isset($pages[$current_page - 1]) && ! empty($pages[$current_page - 1])) {
-                $tags_template->display('success.tpl', array(
-                    'config' => $tags_config
-                ));
+                $tags_t->display('success.tpl');
                 foreach($pages[$current_page - 1] as $page) {
-                    $tags_template->display('post.tpl', array(
-                        'config' => $tags_config,
+                    $tags_t->display('post.tpl', array(
                         'page' => $page
                     ));
                 }
                 // Pagination
-                $tags_template->display('nav.tpl', array(
-                    'config' => $tags_config,
+                $tags_t->display('nav.tpl', array(
                     'current' => $current_page,
                     'total' => $total_pages,
-                    'prev' => $current_page > 1 ? '?' . $tags_config['param']['page'] . '=' . ($current_page - 1) . '&amp;' . $tags_config['param']['tag'] . '=' . urlencode($filter) : false,
-                    'next' => $current_page < $total_pages ? '?' . $tags_config['param']['page'] . '=' . ($current_page + 1) . '&amp;' . $tags_config['param']['tag'] . '=' . urlencode($filter) : false
+                    'prev' => $current_page > 1 ? '?' . $tags_c['param']['page'] . '=' . ($current_page - 1) . '&amp;' . $tags_c['param']['tag'] . '=' . urlencode($filter) : false,
+                    'next' => $current_page < $total_pages ? '?' . $tags_c['param']['page'] . '=' . ($current_page + 1) . '&amp;' . $tags_c['param']['tag'] . '=' . urlencode($filter) : false
                 ));
             } else {
-                $tags_template->display('error.tpl', array(
-                    'config' => $tags_config
-                ));
+                $tags_t->display('error.tpl');
             }
         } else {
-            $tags_template->display('error.tpl', array(
-                'config' => $tags_config
-            ));
+            $tags_t->display('error.tpl');
         }
     }
 
 });
 
-// Morfy::runAction('tags.widget');
-Morfy::addAction('tags.widget', function() use($tags_config, $tags_template) {
+// Action::run('tags.widget');
+Action::add('tags.widget', function() use($tags_c, $tags_t) {
 
     // Get current URI segments
-    $path = Url::getUriSegments();
-    $path_x = array_pop($path);
-    $path = implode('/', $path);
+    $path = Url::getUriString();
     // Get post data
-    $page = Morfy::getPage($path . '/' . $path_x);
+    $page = Pages::getPage($path);
     $tags = array();
-    if(isset($page['tags']) && ! empty($page['tags'])) {
-        foreach(explode(',', $page['tags']) as $tag) {
-            $tag = trim($tag);
-            $tags[$tag] = rtrim(Morfy::$site['url'], '/') . '/' . $path . '?' . $tags_config['param']['tag'] . '=' . urlencode($tag);
+    // Show all tags
+    if(File::exists(__DIR__ . '/cache/tags.json') && File::exists(STORAGE_PATH . '/pages/' . $path . '/index.md')) {
+        $all_tags = json_decode(File::getContent(__DIR__ . '/cache/tags.json'));
+        foreach($all_tags as $tag) {
+            $tags[$tag] = Url::getBase() . '/' . $path . '?' . $tags_c['param']['tag'] . '=' . urlencode($tag);
+        }
+    // Single page, normally
+    } else {
+        if(isset($page['tags']) && ! empty($page['tags'])) {
+            foreach(explode(',', $page['tags']) as $tag) {
+                $tag = trim($tag);
+                $tags[$tag] = Url::getBase() . '/' . dirname($path) . '?' . $tags_c['param']['tag'] . '=' . urlencode($tag);
+            }
         }
     }
     ksort($tags);
-    $tags_template->display('link.tpl', array(
-        'tags' => $tags
+    $tags_t->display('link.tpl', array(
+        'tags' => ! empty($tags) ? $tags : false
     ));
 
 });

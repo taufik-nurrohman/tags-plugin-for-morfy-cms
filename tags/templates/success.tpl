@@ -1,5 +1,5 @@
 <div class="page">
   <div class="alert alert-success">
-    <p>{$config.labels.found}</p>
+    <p>{$config.plugins.tags.labels.found.page}</p>
   </div>
 </div>
